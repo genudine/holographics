@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<title>Genudine Holographics</title>
+<meta charset="utf-8" />
+<style>
+  body {
+    font-family: monospace;
+    background-color: #010101;
+    color: #e0e0e0;
+    font-size: 1.25rem;
+    line-height: 1.6;
+  }
+
+  a {
+    color: #cead42;
+    text-decoration: none;
+  }
+</style>
+
+<h1>Genudine Holographics</h1>
+<h2>PlanetSide 2 Census API as GraphQL</h2>
+<ul>
+  <li><a href="/graphql/playground">Check out the GraphQL Playground</a></li>
+  <li>
+    <a
+      href="/graphql?query=%7B%0A%20%20health%20%7B%0A%20%20%20%20redis%0A%20%20%20%20daybreak%0A%20%20%20%20sanctuary%0A%20%20%7D%0A%7D%0A"
+      >Current system status</a
+    >
+    (<a
+      href="/graphql/playground?query=%7B%0A%20%20health%20%7B%0A%20%20%20%20redis%0A%20%20%20%20daybreak%0A%20%20%20%20sanctuary%0A%20%20%7D%0A%7D%0A"
+      >or in playground</a
+    >)
+  </li>
+</ul>
+<p>
+  Live table data is sourced from the
+  <a href="https://census.daybreakgames.com/">PlanetSide 2 Census API</a>.<br />
+  Static data is sourced from the
+  <a href="https://census.lithafalcon.cc/">Sanctuary.Census API</a>.<br />Our
+  graph is provided at a best-effort match to one of these two data sources; and
+  source will be documented in our GraphQL schema descriptions.
+</p>
+<p>
+  This API is provided by Genudine Dynamics.<br />As always, we take no
+  responsibility for your use of this data... or our weapons. :)
+</p>
+<p>For help, please contact us in #api-dev on the PlanetSide 2 Discord.</p>
+<p>
+  [<a href="https://github.com/genudine/holographics">github</a>] [<a
+    href="https://saerro.harasse.rs"
+    >saerro</a
+  >]
+</p>
