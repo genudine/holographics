@@ -50,7 +50,6 @@ impl Character {
         let (field, value) = match by {
             CharacterBy::Id(id) => ("character_id", id),
             CharacterBy::Name(name) => ("name.first_lower", name.to_lowercase()),
-            _ => return Err("Must provide either an ID or a name, and not both.".to_string()),
         };
 
         let response = census_get::<CharacterResponse>(

@@ -11,6 +11,7 @@ use async_graphql::Object;
 
 pub struct Query;
 
+/// Start here. This is the root of the GraphQL API.
 #[Object]
 impl Query {
     /// Reports on the health of Genudine Holographics
@@ -19,7 +20,7 @@ impl Query {
     }
 
     /// Returns a graph for the character with the given ID or name (case-insensitive).
-    /// Example: character(by: { name: "wrel" })
+    /// Example: `character(by: { name: "wrel" })`
     async fn character(&self, by: CharacterBy) -> Result<Character, String> {
         Character::query(by).await
     }
@@ -35,7 +36,7 @@ impl Query {
     }
 
     /// Returns a graph for the outfit with the given ID or alias/tag (case-insensitive), or name (case-insensitive).
-    /// Example: outfit(by: { id: "1" })
+    /// Example: `outfit(by: { id: "1" })`
     async fn outfit(&self, by: OutfitBy) -> Result<Outfit, String> {
         Outfit::query(by).await
     }
