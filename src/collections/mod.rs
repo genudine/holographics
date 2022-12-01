@@ -1,4 +1,5 @@
 pub mod character;
 pub mod faction;
-pub mod generic_types;
+pub mod generic;
+pub mod outfit;
 pub mod title;

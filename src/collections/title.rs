@@ -1,6 +1,5 @@
+use super::generic::TranslatedString;
 use crate::census::census_get;
-
-use super::generic_types::TranslatedString;
 use async_graphql::SimpleObject;
 use serde::{Deserialize, Serialize};
 
@@ -20,7 +19,7 @@ struct TitleResponse {
 
 impl Title {
     pub async fn query(id: String) -> Result<Title, String> {
-        census_get::<TitleResponse>("title", "title_id", id, None)
+        census_get::<TitleResponse>("title", "title_id", id, None, None)
             .await
             .unwrap()
             .title_list

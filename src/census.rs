@@ -1,7 +1,7 @@
 use crate::cache::Cache;
+use async_graphql::Result;
 use lazy_static::lazy_static;
 use redis::AsyncCommands;
-use reqwest::Result;
 use serde::{de::DeserializeOwned, Serialize};
 
 lazy_static! {
@@ -15,6 +15,7 @@ async fn generic_get<RV: DeserializeOwned + Serialize>(
     collection: &'static str,
     field: &'static str,
     value: String,
+    resolves: Option<Vec<&'static str>>,
     cache_ttl: Option<usize>,
 ) -> Result<RV> {
     if let Ok(data) = Cache::get()
@@ -34,8 +35,16 @@ async fn generic_get<RV: DeserializeOwned + Serialize>(
     );
     // fetch data then cache it
     let resp = reqwest::get(format!(
-        "{}/{}/?c:censusJSON=false&{}={}",
-        base_url, collection, field, value
+        "{}/{}/?c:censusJSON=false&{}={}{}",
+        base_url,
+        collection,
+        field,
+        value,
+        if resolves.is_some() {
+            format!("&c:resolve={}", resolves.unwrap().join(","))
+        } else {
+            "".to_string()
+        }
     ))
     .await
     .unwrap();
@@ -65,6 +74,7 @@ pub async fn census_get<RV: DeserializeOwned + Serialize>(
     collection: &'static str,
     field: &'static str,
     value: String,
+    resolves: Option<Vec<&'static str>>,
     cache_ttl: Option<usize>,
 ) -> Result<RV> {
     generic_get(
@@ -73,6 +83,7 @@ pub async fn census_get<RV: DeserializeOwned + Serialize>(
         collection,
         field,
         value,
+        resolves,
         cache_ttl,
     )
     .await
@@ -82,6 +93,7 @@ pub async fn sanctuary_get<RV: DeserializeOwned + Serialize>(
     collection: &'static str,
     field: &'static str,
     value: String,
+    resolves: Option<Vec<&'static str>>,
     cache_ttl: Option<usize>,
 ) -> Result<RV> {
     generic_get(
@@ -90,6 +102,7 @@ pub async fn sanctuary_get<RV: DeserializeOwned + Serialize>(
         collection,
         field,
         value,
+        resolves,
         cache_ttl,
     )
     .await

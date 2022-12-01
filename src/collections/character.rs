@@ -1,6 +1,10 @@
-use super::{faction::Faction, title::Title};
+use super::{
+    faction::Faction,
+    outfit::{Outfit, OutfitBy},
+    title::Title,
+};
 use crate::census::census_get;
-use async_graphql::{ComplexObject, SimpleObject};
+use async_graphql::{ComplexObject, OneofObject, SimpleObject};
 use serde::{Deserialize, Serialize};
 use serde_aux::prelude::*;
 
@@ -25,6 +29,9 @@ pub struct Character {
     /// faction_id resolves to Faction
     #[graphql(skip)]
     faction_id: String,
+
+    #[graphql(skip)]
+    outfit: PartialCharacterOutfit,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -32,19 +39,31 @@ struct CharacterResponse {
     character_list: Vec<Character>,
 }
 
+#[derive(OneofObject, Debug)]
+pub enum CharacterBy {
+    Id(String),
+    Name(String),
+}
+
 impl Character {
-    pub async fn query(id: Option<String>, name: Option<String>) -> Result<Character, String> {
-        let (field, value) = match (id, name) {
-            (Some(id), None) => ("character_id", id),
-            (None, Some(name)) => ("name.first_lower", name.to_lowercase()),
+    pub async fn query(by: CharacterBy) -> Result<Character, String> {
+        let (field, value) = match by {
+            CharacterBy::Id(id) => ("character_id", id),
+            CharacterBy::Name(name) => ("name.first_lower", name.to_lowercase()),
             _ => return Err("Must provide either an ID or a name, and not both.".to_string()),
         };
 
-        let response = census_get::<CharacterResponse>("character", field, value, None)
-            .await
-            .unwrap()
-            .character_list
-            .pop();
+        let response = census_get::<CharacterResponse>(
+            "character",
+            field,
+            value,
+            Some(vec!["outfit(outfit_id)"]),
+            None,
+        )
+        .await
+        .unwrap()
+        .character_list
+        .pop();
 
         match response {
             Some(character) => Ok(character),
@@ -60,6 +79,11 @@ impl Character {
     }
     async fn faction(&self) -> Faction {
         Faction::query(self.faction_id.clone()).await.unwrap()
+    }
+    async fn outfit(&self) -> Option<Outfit> {
+        Outfit::query(OutfitBy::Id(self.outfit.outfit_id.clone()))
+            .await
+            .ok()
     }
 }
 
@@ -89,4 +113,9 @@ pub struct BattleRank {
     pub percent_to_next: f32,
     #[serde(deserialize_with = "deserialize_number_from_string")]
     pub value: u32,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+struct PartialCharacterOutfit {
+    outfit_id: String,
 }

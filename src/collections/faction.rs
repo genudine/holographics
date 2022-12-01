@@ -1,4 +1,4 @@
-use super::generic_types::TranslatedString;
+use super::generic::TranslatedString;
 use crate::census::sanctuary_get;
 use async_graphql::SimpleObject;
 use serde::{Deserialize, Serialize};
@@ -20,7 +20,7 @@ struct FactionResponse {
 
 impl Faction {
     pub async fn query(id: String) -> Result<Faction, String> {
-        sanctuary_get::<FactionResponse>("faction", "faction_id", id, None)
+        sanctuary_get::<FactionResponse>("faction", "faction_id", id, None, None)
             .await
             .unwrap()
             .faction_list
