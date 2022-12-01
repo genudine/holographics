@@ -1,4 +1,4 @@
-use crate::cache::Cache;
+use crate::cache::{self, Cache};
 use async_graphql::Result;
 use lazy_static::lazy_static;
 use redis::AsyncCommands;
@@ -18,12 +18,10 @@ async fn generic_get<RV: DeserializeOwned + Serialize>(
     resolves: Option<Vec<&'static str>>,
     cache_ttl: Option<usize>,
 ) -> Result<RV> {
+    let cache_key = format!("{}-{}:{}:{}", cache_prefix, collection, field, value);
     if let Ok(data) = Cache::get()
         .await
-        .get::<String, String>(format!(
-            "{}-{}:{}:{}",
-            cache_prefix, collection, field, value
-        ))
+        .get::<String, String>(cache_key.clone())
         .await
     {
         println!("HIT => generic_get({}, {}, {})", cache_prefix, field, value);
@@ -52,15 +50,28 @@ async fn generic_get<RV: DeserializeOwned + Serialize>(
     let data = if *DEBUG_RESPONSE {
         let text = resp.text().await.unwrap();
         println!("RESPONSE => {:?}", text);
-        serde_json::from_str(&text).unwrap()
+        match serde_json::from_str::<RV>(&text) {
+            Ok(data) => Ok::<RV, serde_json::Error>(data),
+            Err(e) => {
+                let _: () = Cache::get().await.del(cache_key.clone()).await.unwrap();
+                Err(e.to_string())?
+            }
+        }
     } else {
-        resp.json().await.unwrap()
-    };
+        match resp.json::<RV>().await {
+            Err(e) => {
+                let _: () = Cache::get().await.del(cache_key.clone()).await.unwrap();
+                Err(e.to_string())?
+            }
+            Ok(data) => Ok(data),
+        }
+    }
+    .unwrap();
 
     Cache::get()
         .await
         .set_ex::<String, String, String>(
-            format!("{}-{}:{}:{}", cache_prefix, collection, field, value),
+            cache_key,
             serde_json::to_string(&data).unwrap(),
             cache_ttl.unwrap_or(60 * 60 * 24),
         )
