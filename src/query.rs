@@ -21,6 +21,7 @@ impl Query {
 
     /// Returns a graph for the character with the given ID or name (case-insensitive).
     /// Example: `character(by: { name: "wrel" })`
+    /// Name can also start with `^` to match the beginning of the name, ex: `^wre`, but will only return the first result.
     async fn character(&self, by: CharacterBy) -> Result<Character, String> {
         Character::query(by).await
     }

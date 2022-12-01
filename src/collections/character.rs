@@ -31,7 +31,7 @@ pub struct Character {
     faction_id: String,
 
     #[graphql(skip)]
-    outfit: PartialCharacterOutfit,
+    outfit: Option<PartialCharacterOutfit>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -80,9 +80,14 @@ impl Character {
         Faction::query(self.faction_id.clone()).await.unwrap()
     }
     async fn outfit(&self) -> Option<Outfit> {
-        Outfit::query(OutfitBy::Id(self.outfit.outfit_id.clone()))
-            .await
-            .ok()
+        match self.outfit.as_ref() {
+            Some(outfit) => Some(
+                Outfit::query(OutfitBy::Id(outfit.outfit_id.clone()))
+                    .await
+                    .unwrap(),
+            ),
+            None => None,
+        }
     }
 }
 

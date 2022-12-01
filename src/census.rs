@@ -1,4 +1,4 @@
-use crate::cache::{self, Cache};
+use crate::cache::Cache;
 use async_graphql::Result;
 use lazy_static::lazy_static;
 use redis::AsyncCommands;
