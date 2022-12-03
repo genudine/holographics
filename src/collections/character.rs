@@ -3,9 +3,8 @@ use super::{
     outfit::{Outfit, OutfitBy},
     title::Title,
 };
-use crate::census::census_get;
+use crate::{census::census_get, query};
 use async_graphql::{ComplexObject, Object, OneofObject, SimpleObject};
-use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 use serde_aux::prelude::*;
 
@@ -58,10 +57,10 @@ impl Character {
 
         let response = census_get::<CharacterResponse>(
             "character",
-            IndexMap::from([
+            query!(
                 (field, value),
                 ("c:resolve", "outfit(outfit_id)".to_string()),
-            ]),
+            ),
             None,
         )
         .await
