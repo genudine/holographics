@@ -42,3 +42,14 @@ impl Health {
             .unwrap_or(UpDown::Down)
     }
 }
+
+#[derive(Default)]
+pub struct HealthQuery;
+
+#[Object]
+impl HealthQuery {
+    /// Reports on the health of Genudine Holographics
+    async fn health(&self) -> Health {
+        Health {}
+    }
+}

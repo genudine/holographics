@@ -1,5 +1,6 @@
 use crate::cache::Cache;
 use async_graphql::Result;
+use indexmap::IndexMap;
 use lazy_static::lazy_static;
 use redis::AsyncCommands;
 use serde::{de::DeserializeOwned, Serialize};
@@ -11,45 +12,49 @@ lazy_static! {
 
 async fn generic_get<RV: DeserializeOwned + Serialize>(
     base_url: &'static str,
-    cache_prefix: &'static str,
     collection: &'static str,
-    field: &'static str,
-    value: String,
-    resolves: Option<Vec<&'static str>>,
+    query: IndexMap<&'static str, String>,
     cache_ttl: Option<usize>,
 ) -> Result<RV> {
-    let cache_key = format!("{}-{}:{}:{}", cache_prefix, collection, field, value);
+    let url = format!(
+        "{}/{}?{}",
+        base_url,
+        collection,
+        query
+            .iter()
+            .map(|(k, v)| format!("{}={}", k, v))
+            .collect::<Vec<String>>()
+            .join("&")
+    );
+    println!("URL: {}", url);
+
+    let cache_key = seahash::hash(url.as_bytes()).to_string();
+
     if let Ok(data) = Cache::get()
         .await
         .get::<String, String>(cache_key.clone())
         .await
     {
-        println!("HIT => generic_get({}, {}, {})", cache_prefix, field, value);
+        println!(
+            "HIT => generic_get([{}] {}, {}, {:#?})",
+            cache_key, base_url, collection, query
+        );
         return Ok(serde_json::from_str(&data).unwrap());
     }
     println!(
-        "MISS => generic_get({}, {}, {})",
-        cache_prefix, field, value
-    );
-    // fetch data then cache it
-    let resp = reqwest::get(format!(
-        "{}/{}/?c:censusJSON=false&{}={}{}",
+        "MISS => generic_get([{}] {}, {}, {:#?})",
+        cache_key.clone(),
         base_url,
         collection,
-        field,
-        value,
-        if resolves.is_some() {
-            format!("&c:resolve={}", resolves.unwrap().join(","))
-        } else {
-            "".to_string()
-        }
-    ))
-    .await
-    .unwrap();
+        query
+    );
+    // fetch data then cache it
+    let resp = reqwest::get(url).await.unwrap();
+    let status: u16 = resp.status().into();
 
     let data = if *DEBUG_RESPONSE {
         let text = resp.text().await.unwrap();
-        println!("RESPONSE => {:?}", text);
+        println!("RESPONSE => {:?} {:?}", status, text);
         match serde_json::from_str::<RV>(&text) {
             Ok(data) => Ok::<RV, serde_json::Error>(data),
             Err(e) => {
@@ -71,7 +76,7 @@ async fn generic_get<RV: DeserializeOwned + Serialize>(
     Cache::get()
         .await
         .set_ex::<String, String, String>(
-            cache_key,
+            cache_key.clone(),
             serde_json::to_string(&data).unwrap(),
             cache_ttl.unwrap_or(60 * 60 * 24),
         )
@@ -83,18 +88,13 @@ async fn generic_get<RV: DeserializeOwned + Serialize>(
 
 pub async fn census_get<RV: DeserializeOwned + Serialize>(
     collection: &'static str,
-    field: &'static str,
-    value: String,
-    resolves: Option<Vec<&'static str>>,
+    query: IndexMap<&'static str, String>,
     cache_ttl: Option<usize>,
 ) -> Result<RV> {
     generic_get(
         "https://census.daybreakgames.com/s:saegd/get/ps2:v2",
-        "census",
         collection,
-        field,
-        value,
-        resolves,
+        query,
         cache_ttl,
     )
     .await
@@ -102,18 +102,15 @@ pub async fn census_get<RV: DeserializeOwned + Serialize>(
 
 pub async fn sanctuary_get<RV: DeserializeOwned + Serialize>(
     collection: &'static str,
-    field: &'static str,
-    value: String,
-    resolves: Option<Vec<&'static str>>,
+    mut query: IndexMap<&'static str, String>,
     cache_ttl: Option<usize>,
 ) -> Result<RV> {
+    query.insert("c:censusJSON", "false".to_string());
+
     generic_get(
         "https://census.lithafalcon.cc/get/ps2",
-        "sanctu",
         collection,
-        field,
-        value,
-        resolves,
+        query,
         cache_ttl,
     )
     .await

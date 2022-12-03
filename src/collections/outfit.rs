@@ -1,8 +1,8 @@
-use async_graphql::{OneofObject, SimpleObject};
+use async_graphql::{Object, OneofObject, SimpleObject};
 use serde::{Deserialize, Serialize};
 use serde_aux::prelude::*;
 
-use crate::census::census_get;
+use crate::{census::census_get, query};
 
 #[derive(SimpleObject, Serialize, Deserialize, Debug, Clone)]
 pub struct Outfit {
@@ -34,13 +34,13 @@ struct OutfitResponse {
 
 impl Outfit {
     pub async fn query(by: OutfitBy) -> Result<Outfit, String> {
-        let (field, value) = match by {
-            OutfitBy::Id(id) => ("outfit_id", id),
-            OutfitBy::Alias(alias) => ("alias_lower", alias.to_lowercase()),
-            OutfitBy::Name(name) => ("name_lower", name.to_lowercase()),
+        let query = match by {
+            OutfitBy::Id(id) => query!("outfit_id", id),
+            OutfitBy::Alias(alias) => query!("alias_lower", alias.to_lowercase()),
+            OutfitBy::Name(name) => query!("name_lower", name.to_lowercase()),
         };
 
-        let response = census_get::<OutfitResponse>("outfit", field, value, None, None)
+        let response = census_get::<OutfitResponse>("outfit", query, None)
             .await
             .unwrap()
             .outfit_list
@@ -50,5 +50,15 @@ impl Outfit {
             Some(outfit) => Ok(outfit),
             None => Err("No outfit found".to_string()),
         }
+    }
+}
+
+#[derive(Default)]
+pub struct OutfitQuery;
+
+#[Object]
+impl OutfitQuery {
+    async fn outfit(&self, by: OutfitBy) -> Outfit {
+        Outfit::query(by).await.unwrap()
     }
 }

@@ -1,44 +1,17 @@
 use crate::{
     collections::{
-        character::{Character, CharacterBy},
-        faction::Faction,
-        outfit::{Outfit, OutfitBy},
-        title::Title,
+        character::CharacterQuery, faction::FactionQuery, outfit::OutfitQuery, title::TitleQuery,
     },
-    health::Health,
+    health::HealthQuery,
 };
-use async_graphql::Object;
-
-pub struct Query;
+use async_graphql::MergedObject;
 
 /// Start here. This is the root of the GraphQL API.
-#[Object]
-impl Query {
-    /// Reports on the health of Genudine Holographics
-    async fn health(&self) -> Health {
-        Health {}
-    }
-
-    /// Returns a graph for the character with the given ID or name (case-insensitive).
-    /// Example: `character(by: { name: "wrel" })`
-    /// Name can also start with `^` to match the beginning of the name, ex: `^wre`, but will only return the first result.
-    async fn character(&self, by: CharacterBy) -> Result<Character, String> {
-        Character::query(by).await
-    }
-
-    /// Returns a graph for the faction with the given ID.
-    async fn faction(&self, id: String) -> Result<Faction, String> {
-        Faction::query(id).await
-    }
-
-    /// Returns a graph for the title with the given ID.
-    async fn title(&self, id: String) -> Result<Title, String> {
-        Title::query(id).await
-    }
-
-    /// Returns a graph for the outfit with the given ID or alias/tag (case-insensitive), or name (case-insensitive).
-    /// Example: `outfit(by: { id: "1" })`
-    async fn outfit(&self, by: OutfitBy) -> Result<Outfit, String> {
-        Outfit::query(by).await
-    }
-}
+#[derive(MergedObject, Default)]
+pub struct Query(
+    HealthQuery,
+    CharacterQuery,
+    FactionQuery,
+    TitleQuery,
+    OutfitQuery,
+);

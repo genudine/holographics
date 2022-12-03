@@ -4,7 +4,8 @@ use super::{
     title::Title,
 };
 use crate::census::census_get;
-use async_graphql::{ComplexObject, OneofObject, SimpleObject};
+use async_graphql::{ComplexObject, Object, OneofObject, SimpleObject};
+use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 use serde_aux::prelude::*;
 
@@ -15,12 +16,15 @@ use serde_aux::prelude::*;
 pub struct Character {
     #[graphql(name = "id")]
     pub character_id: String,
-    pub name: Name,
     pub head_id: String,
     pub certs: Certs,
     pub battle_rank: BattleRank,
     #[serde(deserialize_with = "deserialize_number_from_string")]
     pub prestige_level: u8,
+
+    // Special resolver
+    #[graphql(skip)]
+    pub name: Name,
 
     /// title_id resolves to Title
     #[graphql(skip)]
@@ -54,9 +58,10 @@ impl Character {
 
         let response = census_get::<CharacterResponse>(
             "character",
-            field,
-            value,
-            Some(vec!["outfit(outfit_id)"]),
+            IndexMap::from([
+                (field, value),
+                ("c:resolve", "outfit(outfit_id)".to_string()),
+            ]),
             None,
         )
         .await
@@ -73,6 +78,16 @@ impl Character {
 
 #[ComplexObject]
 impl Character {
+    /// Character name normalized from `name: {first, first_lower}` structure.
+    /// If you prefer lower, ask as `name(lower: true)`.
+    async fn name(&self, #[graphql(default = false)] lower: bool) -> String {
+        if !lower {
+            self.name.first.clone()
+        } else {
+            self.name.first_lower.clone()
+        }
+    }
+
     async fn title(&self) -> Title {
         Title::query(self.title_id.clone()).await.unwrap()
     }
@@ -122,4 +137,17 @@ pub struct BattleRank {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct PartialCharacterOutfit {
     outfit_id: String,
+}
+
+#[derive(Default)]
+pub struct CharacterQuery;
+
+#[Object]
+impl CharacterQuery {
+    /// Returns a graph for the character with the given ID or name (case-insensitive).
+    /// Example: `character(by: { name: "wrel" })`
+    /// Name can also start with `^` to match the beginning of the name, ex: `^wre`, but will only return the first result.
+    async fn character(&self, by: CharacterBy) -> Result<Character, String> {
+        Character::query(by).await
+    }
 }

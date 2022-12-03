@@ -2,6 +2,9 @@ mod cache;
 mod census;
 mod collections;
 mod health;
+mod macros;
+
+#[macro_use]
 mod query;
 
 use async_graphql::{
@@ -54,7 +57,7 @@ async fn graphiql() -> impl IntoResponse {
 
 #[tokio::main]
 async fn main() {
-    let schema = Schema::build(query::Query, EmptyMutation, EmptySubscription).finish();
+    let schema = Schema::build(query::Query::default(), EmptyMutation, EmptySubscription).finish();
 
     let app = Router::new()
         .route("/", get(index))

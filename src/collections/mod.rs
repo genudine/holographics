@@ -3,3 +3,4 @@ pub mod faction;
 pub mod generic;
 pub mod outfit;
 pub mod title;
+pub mod world_event;
