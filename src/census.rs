@@ -105,7 +105,9 @@ pub async fn sanctuary_get<RV: DeserializeOwned + Serialize>(
     mut query: IndexMap<&'static str, String>,
     cache_ttl: Option<usize>,
 ) -> Result<RV> {
-    query.insert("c:censusJSON", "false".to_string());
+    if !query.contains_key("c:censusJSON") {
+        query.insert("c:censusJSON", "false".to_string());
+    }
 
     generic_get(
         "https://census.lithafalcon.cc/get/ps2",

@@ -3,33 +3,43 @@ use crate::{census::sanctuary_get, query};
 use async_graphql::{ComplexObject, Object, SimpleObject};
 use serde::{Deserialize, Serialize};
 
-/// Faction (NC, TR, VS, NSO)
-/// Source: https://census.lithafalcon.cc/get/ps2/faction
+/// Zone (Indar, Hossin...)
+/// Source: https://census.lithafalcon.cc/get/ps2/zone
 #[derive(SimpleObject, Serialize, Deserialize, Debug, Clone)]
 #[graphql(complex)]
-pub struct Faction {
-    pub faction_id: u8,
+pub struct Zone {
+    pub zone_id: u32,
+    pub hex_size: u16,
+
+    /// Technically, this is `name.en`.
+    pub code: String,
+
     #[graphql(skip)]
     pub name: TranslatedString,
-    pub code_tag: String,
-    pub user_selectable: bool,
+    #[graphql(skip)]
+    pub description: TranslatedString,
 }
 
 #[ComplexObject]
-impl Faction {
-    /// Name with translation support. Query as `name(lang: "ru")`
+impl Zone {
+    /// Name with translation support. Default is `en`. Query as `name(lang: "ru")`
     async fn name(&self, #[graphql(default = "en")] lang: String) -> String {
         self.name.lang(lang)
+    }
+
+    /// Description with translation support. Default is `en`. Query as `description(lang: "ru")`
+    async fn description(&self, #[graphql(default = "en")] lang: String) -> String {
+        self.description.lang(lang)
     }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct FactionResponse {
-    faction_list: Vec<Faction>,
+    faction_list: Vec<Zone>,
 }
 
-impl Faction {
-    pub async fn query(id: String) -> Result<Faction, String> {
+impl Zone {
+    pub async fn query(id: String) -> Result<Zone, String> {
         sanctuary_get::<FactionResponse>("faction", query!("faction_id", id.clone()), None)
             .await
             .unwrap()
@@ -44,7 +54,7 @@ pub struct FactionQuery;
 
 #[Object]
 impl FactionQuery {
-    async fn faction(&self, id: String) -> Faction {
-        Faction::query(id).await.unwrap()
+    async fn faction(&self, id: String) -> Zone {
+        Zone::query(id).await.unwrap()
     }
 }

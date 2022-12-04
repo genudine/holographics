@@ -2,6 +2,7 @@ use super::{
     faction::Faction,
     outfit::{Outfit, OutfitBy},
     title::Title,
+    world::World,
 };
 use crate::{census::census_get, query};
 use async_graphql::{ComplexObject, Object, OneofObject, SimpleObject};
@@ -35,6 +36,8 @@ pub struct Character {
 
     #[graphql(skip)]
     outfit: Option<PartialCharacterOutfit>,
+    #[graphql(skip)]
+    world_id: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -59,7 +62,7 @@ impl Character {
             "character",
             query!(
                 (field, value),
-                ("c:resolve", "outfit(outfit_id)".to_string()),
+                ("c:resolve", "outfit(outfit_id),world(world_id)".to_string()),
             ),
             None,
         )
@@ -87,11 +90,14 @@ impl Character {
         }
     }
 
-    async fn title(&self) -> Title {
-        Title::query(self.title_id.clone()).await.unwrap()
+    async fn title(&self) -> Option<Title> {
+        Title::query(self.title_id.clone()).await.ok()
     }
     async fn faction(&self) -> Faction {
         Faction::query(self.faction_id.clone()).await.unwrap()
+    }
+    async fn world(&self) -> World {
+        World::query(self.world_id.clone(), false).await.unwrap()
     }
     async fn outfit(&self) -> Option<Outfit> {
         match self.outfit.as_ref() {
@@ -136,6 +142,11 @@ pub struct BattleRank {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct PartialCharacterOutfit {
     outfit_id: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+struct PartialCharacterWorld {
+    world_id: String,
 }
 
 #[derive(Default)]
