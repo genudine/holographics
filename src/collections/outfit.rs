@@ -1,10 +1,8 @@
-use async_graphql::{ComplexObject, Object, OneofObject, SimpleObject};
-use serde::{Deserialize, Serialize};
-use serde_aux::prelude::*;
-
-use crate::{census::census_get, query};
-
-use super::character::{Character, CharacterBy};
+use super::{
+    character::{Character, CharacterBy},
+    outfit_member::OutfitMember,
+};
+use crate::prelude::*;
 
 #[derive(SimpleObject, Serialize, Deserialize, Debug, Clone)]
 #[graphql(complex)]
@@ -22,9 +20,7 @@ pub struct Outfit {
     #[serde(deserialize_with = "deserialize_number_from_string")]
     member_count: u32,
 
-    #[serde(default)]
-    #[graphql(skip)]
-    members: Vec<PartialOutfitMember>,
+    members: Vec<OutfitMember>,
 }
 
 #[ComplexObject]
@@ -56,7 +52,7 @@ impl Outfit {
             OutfitBy::Name(name) => query!("name_lower", name.to_lowercase()),
         };
 
-        query.insert("c:resolve", "member(character_id)".to_string());
+        query.insert("c:resolve", "member".to_string());
 
         let response = census_get::<OutfitResponse>("outfit", query, None)
             .await

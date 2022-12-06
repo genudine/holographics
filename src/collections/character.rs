@@ -4,10 +4,7 @@ use super::{
     title::Title,
     world::World,
 };
-use crate::{census::census_get, query};
-use async_graphql::{ComplexObject, Object, OneofObject, SimpleObject};
-use serde::{Deserialize, Serialize};
-use serde_aux::prelude::*;
+use crate::prelude::*;
 
 /// Character
 /// Source: https://census.daybreakgames.com/get/ps2:v2/character

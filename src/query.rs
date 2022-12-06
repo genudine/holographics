@@ -1,7 +1,7 @@
 use crate::{
     collections::{
         character::CharacterQuery, faction::FactionQuery, outfit::OutfitQuery, title::TitleQuery,
-        world::WorldQuery, world_event_metagame::WorldEventMetagameQuery,
+        world::WorldQuery, world_event_metagame::WorldEventMetagameQuery, zone::ZoneQuery,
     },
     health::HealthQuery,
 };
@@ -18,4 +18,5 @@ pub struct Query(
     TitleQuery,
     WorldEventMetagameQuery,
     WorldQuery,
+    ZoneQuery,
 );

@@ -3,8 +3,7 @@ mod census;
 mod collections;
 mod health;
 mod macros;
-
-#[macro_use]
+mod prelude;
 mod query;
 
 use async_graphql::{

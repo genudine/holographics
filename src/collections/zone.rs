@@ -1,7 +1,4 @@
-use super::generic::TranslatedString;
-use crate::{census::sanctuary_get, query};
-use async_graphql::{ComplexObject, Object, SimpleObject};
-use serde::{Deserialize, Serialize};
+use crate::prelude::*;
 
 /// Zone (Indar, Hossin...)
 /// Source: https://census.lithafalcon.cc/get/ps2/zone
@@ -50,10 +47,10 @@ impl Zone {
 }
 
 #[derive(Default)]
-pub struct FactionQuery;
+pub struct ZoneQuery;
 
 #[Object]
-impl FactionQuery {
+impl ZoneQuery {
     async fn faction(&self, id: String) -> Zone {
         Zone::query(id).await.unwrap()
     }

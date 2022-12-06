@@ -1,7 +1,4 @@
-use super::generic::TranslatedString;
-use crate::{census::sanctuary_get, query};
-use async_graphql::{ComplexObject, Object, SimpleObject};
-use serde::{Deserialize, Serialize};
+use crate::prelude::*;
 
 /// Faction (NC, TR, VS, NSO)
 /// Source: https://census.lithafalcon.cc/get/ps2/faction

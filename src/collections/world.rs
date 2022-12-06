@@ -1,11 +1,4 @@
-use super::generic::TranslatedString;
-use crate::{
-    census::{census_get, sanctuary_get},
-    query,
-};
-use async_graphql::{ComplexObject, Object, SimpleObject};
-use serde::{Deserialize, Serialize};
-use serde_aux::prelude::*;
+use crate::prelude::*;
 
 /// World as in Connery, Emerald, etc.
 /// Source: https://census.lithafalcon.cc/get/ps2/world
@@ -24,10 +17,18 @@ pub struct World {
     pub world_id: String,
 
     /// **SANCTUARY ONLY**: Can players log in to this world?
-    #[serde(default, deserialize_with = "deserialize_bool_from_anything")]
+    #[serde(
+        default,
+        deserialize_with = "deserialize_bool_from_anything",
+        alias = "is_locked"
+    )]
     pub is_locked: bool,
     /// **SANCTUARY ONLY**: Can players make characters on this world?
-    #[serde(default, deserialize_with = "deserialize_bool_from_anything")]
+    #[serde(
+        default,
+        deserialize_with = "deserialize_bool_from_anything",
+        alias = "is_unprivileged_access_allowed"
+    )]
     pub is_unprivileged_access_allowed: bool,
 
     /// **CENSUS ONLY**: An inaccurate representation of server "online" state.

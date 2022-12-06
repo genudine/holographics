@@ -11,7 +11,7 @@ lazy_static! {
 }
 
 async fn generic_get<RV: DeserializeOwned + Serialize>(
-    base_url: &'static str,
+    base_url: &str,
     collection: &'static str,
     query: IndexMap<&'static str, String>,
     cache_ttl: Option<usize>,
@@ -86,20 +86,43 @@ async fn generic_get<RV: DeserializeOwned + Serialize>(
     Ok(data)
 }
 
+/// Get data from the Census API
+///
+/// Consider setting the cache_ttl to `604800` (7 days) for static data,
+/// and `86400` (1 day) for dynamic data. Census is slow, help it out.
+/// Defaults to 1 day.
+///
+/// Knows of a special query item:
+///   - `c:platform`:`ps2|ps2ps4us|ps2ps4eu` (default: `ps2`): Which platform should be queried
 pub async fn census_get<RV: DeserializeOwned + Serialize>(
     collection: &'static str,
-    query: IndexMap<&'static str, String>,
+    mut query: IndexMap<&'static str, String>,
     cache_ttl: Option<usize>,
 ) -> Result<RV> {
+    let platform = match query.remove("c:platform") {
+        Some(platform) => platform,
+        None => "ps2".to_string(),
+    };
+
     generic_get(
-        "https://census.daybreakgames.com/s:saegd/get/ps2:v2",
+        format!("https://census.daybreakgames.com/s:saegd/get/{}", platform).as_str(),
         collection,
         query,
-        cache_ttl,
+        match cache_ttl {
+            Some(ttl) => Some(ttl),
+            None => Some(60 * 60 * 24), // 1 day
+        },
     )
     .await
 }
 
+/// Get data from the Sanctuary API
+///
+/// Cache TTL defaults to 7 days.
+///
+/// Knows of two special query items:
+///   - `c:censusJSON`: `true|false` (default: `false`): whether to return the raw census JSON or type-corrected data
+///   - `c:platform`: `ps2|pts` (default: `ps2`): PS2 PC Live or PTS data
 pub async fn sanctuary_get<RV: DeserializeOwned + Serialize>(
     collection: &'static str,
     mut query: IndexMap<&'static str, String>,
@@ -109,11 +132,20 @@ pub async fn sanctuary_get<RV: DeserializeOwned + Serialize>(
         query.insert("c:censusJSON", "false".to_string());
     }
 
+    let platform = if query.get("c:platform").is_some() {
+        query.get("c:platform").unwrap().clone()
+    } else {
+        "ps2".to_string()
+    };
+
     generic_get(
-        "https://census.lithafalcon.cc/get/ps2",
+        format!("https://census.lithafalcon.cc/get/{}", platform).as_str(),
         collection,
         query,
-        cache_ttl,
+        match cache_ttl {
+            Some(ttl) => Some(ttl),
+            None => Some(60 * 60 * 24 * 7), // 1 week, as Sanctuary is mostly static data
+        },
     )
     .await
 }

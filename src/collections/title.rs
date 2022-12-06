@@ -1,7 +1,4 @@
-use super::generic::TranslatedString;
-use crate::{census::census_get, query};
-use async_graphql::{ComplexObject, Object, SimpleObject};
-use serde::{Deserialize, Serialize};
+use crate::prelude::*;
 
 /// Title
 /// Source: https://census.daybreakgames.com/get/ps2/title

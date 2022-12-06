@@ -1,9 +1,5 @@
-use crate::{census::census_get, query};
-use async_graphql::{ComplexObject, Object, SimpleObject};
-use serde::{Deserialize, Serialize};
-use serde_aux::prelude::*;
-
 use super::{world::World, zone::Zone};
+use crate::prelude::*;
 
 #[derive(SimpleObject, Serialize, Deserialize, Debug, Clone)]
 #[graphql(complex)]
