@@ -132,10 +132,9 @@ pub async fn sanctuary_get<RV: DeserializeOwned + Serialize>(
         query.insert("c:censusJSON", "false".to_string());
     }
 
-    let platform = if query.get("c:platform").is_some() {
-        query.get("c:platform").unwrap().clone()
-    } else {
-        "ps2".to_string()
+    let platform = match query.remove("c:platform") {
+        Some(platform) => platform,
+        None => "ps2".to_string(),
     };
 
     generic_get(
